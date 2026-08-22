@@ -90,6 +90,43 @@ causes, roughly in order of likelihood:
 If the red banner never appears and you're still not seeing data persist,
 that's worth reporting as an actual bug rather than an environment quirk.
 
+### Fixed in this update
+
+A full test pass (Playwright, automated) found and fixed several real bugs,
+the most serious of which meant **you could never actually pick anything
+other than the first option** in a few chip lists:
+
+- **Category, "Paid by", and category-icon chips didn't respond to clicks.**
+  Those three chip rows were wrapped in a `<label>` element, which makes the
+  browser automatically re-click the *first* button inside the label every
+  time you click any other button in it — so choosing "Rent" instead of
+  "Groceries" (or any payer other than the first, or any icon other than the
+  first) silently snapped back to the default the instant you clicked it.
+  Expenses always saved under the first category/payer no matter what you
+  picked. Fixed by using a plain `<div>` for those rows instead (the single
+  Amount/Note/Name/Budget fields correctly keep `<label>`, since those only
+  wrap one control).
+- **Monthly/quarterly recurring expenses drifted off their date.** A bill
+  started on the 29th/30th/31st (e.g. rent on Jan 31) would land on the 3rd
+  of the following months instead, because adding "1 month" to Jan 31 rolls
+  over into March in JavaScript. Recurring dates are now anchored to the
+  original start date and clamped to the last real day of a short month
+  (Jan 31 → Feb 28 → Mar 31, not Jan 31 → Mar 3 → Apr 3).
+- **Settle screen went blank with zero household members** instead of
+  showing "All settled up".
+- **Closing the Household editor without hitting "Save household"** used to
+  keep any member you'd added or removed anyway (it just hadn't reached
+  storage yet) — Cancel/Close now genuinely discards unsaved member changes.
+- **Deleting a category left its recurring rule running**, so it kept
+  generating new "Uncategorized" expenses forever; deleting a category now
+  stops any recurring rule tied to it too.
+- **CSV export could shift columns** if a category or member name contained
+  a comma (only the Note column was escaped before). All columns are now
+  properly CSV-quoted.
+- A cosmetic fix: a corrupted (not blocked) save file no longer trips the
+  "storage is blocked" banner — that message is now reserved for storage
+  that's actually unavailable.
+
 ### Troubleshooting: whole screens look empty or nothing responds
 
 This almost always means `index.html`, `css/styles.css`, `js/data.js`, and
