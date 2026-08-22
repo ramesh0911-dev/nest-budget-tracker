@@ -191,12 +191,39 @@
     return `${MONTH_NAMES[month - 1]} ${year}`;
   }
 
+  function monthOfIso(iso) {
+    const [y, m] = iso.split("-").map(Number);
+    return { year: y, month: m };
+  }
+
+  // If the currently-viewed month (top of Home/Activity) isn't the month an
+  // expense actually belongs to, jump the view to match it and save/render.
+  // Without this, adding or editing an expense while browsing a past/future
+  // month (via the < > arrows) makes it look like nothing was saved at all —
+  // the expense IS there, it's just filtered out of whatever month happens
+  // to be selected, and "August 2027" at the top is easy to miss as the
+  // reason. Returns true if the view actually moved.
+  function jumpToMonthOf(iso) {
+    const target = monthOfIso(iso);
+    const cur = currentMonth();
+    if (target.year === cur.year && target.month === cur.month) return false;
+    state.viewMonth = target;
+    return true;
+  }
+
   function renderHome() {
     const { year, month } = currentMonth();
 
     document.getElementById("householdName").textContent = state.household.name;
     document.getElementById("monthLabel").textContent = monthLabelText(year, month);
     document.getElementById("monthNavLabel").textContent = monthLabelText(year, month);
+
+    // Surface it plainly when the view isn't on the real current month --
+    // this is the #1 way "I saved an expense and it disappeared" reports
+    // turn out to be a month-filter mismatch rather than a lost save.
+    const today = monthOfIso(todayIso());
+    const jumpBtn = document.getElementById("jumpToCurrentMonth");
+    if (jumpBtn) jumpBtn.hidden = (year === today.year && month === today.month);
 
     const spent = txsForMonth(year, month).reduce((s, t) => s + Number(t.amount), 0);
     const budget = totalBudget();
@@ -264,6 +291,17 @@
 
   document.getElementById("prevMonth").addEventListener("click", () => shiftMonth(-1));
   document.getElementById("nextMonth").addEventListener("click", () => shiftMonth(1));
+
+  const jumpToCurrentMonthBtn = document.getElementById("jumpToCurrentMonth");
+  if (jumpToCurrentMonthBtn) {
+    jumpToCurrentMonthBtn.addEventListener("click", () => {
+      state.viewMonth = monthOfIso(todayIso());
+      Store.save();
+      renderHome();
+      renderActivity();
+      renderSettle();
+    });
+  }
 
   document.getElementById("fabAdd").addEventListener("click", () => openExpenseSheet(null));
 
@@ -598,13 +636,17 @@
       state.transactions.push(tx);
     }
 
+    const jumped = jumpToMonthOf(date);
     Store.save();
     closeExpenseSheet();
     renderHome();
     renderActivity();
     renderBudgets();
     renderSettle();
-    notifySave("Expense saved");
+    // If the view had to jump to a different month to show this expense,
+    // say so explicitly -- "Saved" alone would look identical to a failed
+    // save on whatever month was showing before.
+    notifySave(jumped ? `Saved to ${monthLabelText(state.viewMonth.year, state.viewMonth.month)}` : "Expense saved");
   });
 
   document.getElementById("fDelete").addEventListener("click", () => {
