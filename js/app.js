@@ -860,25 +860,46 @@
 
   function checkStorageBanner() {
     const banner = document.getElementById("storageBanner");
-    if (!Store.storageAvailable) {
+    if (banner && !Store.storageAvailable) {
       banner.hidden = false;
     }
   }
 
-  document.getElementById("storageBannerClose").addEventListener("click", () => {
-    document.getElementById("storageBanner").hidden = true;
-  });
+  // Guarded: if index.html and app.js ever get out of sync (e.g. only part of
+  // an update landed), a missing element here must never take down the rest
+  // of the app the way an unguarded getElementById(...).addEventListener did.
+  const storageBannerCloseBtn = document.getElementById("storageBannerClose");
+  if (storageBannerCloseBtn) {
+    storageBannerCloseBtn.addEventListener("click", () => {
+      const banner = document.getElementById("storageBanner");
+      if (banner) banner.hidden = true;
+    });
+  }
 
   function boot() {
-    checkStorageBanner();
-    generateDueRecurringTransactions();
-    renderHome();
-    renderActivity();
-    renderBudgets();
-    renderSettle();
-    switchView("home");
-    if (!state.onboardingDone) {
-      startOnboarding();
+    try {
+      checkStorageBanner();
+      generateDueRecurringTransactions();
+      renderHome();
+      renderActivity();
+      renderBudgets();
+      renderSettle();
+      switchView("home");
+      if (!state.onboardingDone) {
+        startOnboarding();
+      }
+    } catch (e) {
+      // Never fail silent-blank: if something above throws (stale/mismatched
+      // files, an unexpected null element, etc.) surface it instead of
+      // leaving every screen empty with no clue why.
+      console.error("Nest failed to start up:", e);
+      const app = document.getElementById("app");
+      if (app) {
+        const err = document.createElement("div");
+        err.style.cssText = "padding:20px;font-family:sans-serif;color:#7C2820;background:#F6D9D3;margin:12px;border-radius:12px;";
+        err.textContent = "Nest hit an error while starting up (" + (e && e.message ? e.message : e) + "). Try a hard refresh (Ctrl/Cmd+Shift+R) — if that doesn't help, index.html, css/styles.css, js/data.js, and js/app.js may be out of sync (mixed old/new versions). Re-download all four together and replace them as a set.";
+        app.prepend(err);
+      }
     }
   }
 
