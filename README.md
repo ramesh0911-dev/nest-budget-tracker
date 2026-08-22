@@ -29,16 +29,42 @@ Pure HTML/CSS/JavaScript — no build step, no framework, no backend required.
 
 ## Running it
 
-No install, no build. Any static file server works:
+No install, no build, no server required. Just double-click `index.html`
+and it opens directly in your browser — every feature, including saving
+data, works fully from the local filesystem this way.
+
+### Optional: running it through a local server instead
+
+Some people prefer serving it over `http://localhost` rather than opening
+the file directly. This is entirely optional — skip it unless you have a
+specific reason to prefer a server.
+
+**Windows**, if Python is installed:
 
 ```bash
 cd Budget_Tracker_App
-python3 -m http.server 8080
+python -m http.server 8080
 # then open http://localhost:8080
 ```
 
-Or just double-click `index.html` to open it directly in a browser (all
-features work from the local filesystem too).
+Windows installs it as `python`, not `python3` — using `python3` is what
+triggers the "install from the Microsoft Store" prompt even when Python is
+already present. If `python` also fails to run and you do want it
+installed, get it from [python.org](https://python.org) (not the Store),
+checking "Add python.exe to PATH" during setup. If Python is installed but
+you're still seeing the Store prompt, turn it off at Settings → Apps →
+Advanced app settings → App execution aliases (disable the `python.exe`
+entry there).
+
+**macOS/Linux**, or **Windows with Node.js instead of Python**:
+
+```bash
+cd Budget_Tracker_App
+python3 -m http.server 8080     # macOS/Linux
+# or, with Node.js installed on any OS:
+npx http-server -p 8080
+# then open http://localhost:8080
+```
 
 ## Data & persistence
 
