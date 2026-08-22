@@ -60,6 +60,36 @@ Expense sheet for the current editing session only; to keep `localStorage`
 small and reliable it is not persisted between page loads. Swap in a real
 backend (or IndexedDB) if you need durable photo storage.
 
+### Troubleshooting: "my changes aren't saved"
+
+The app checks whether `localStorage` actually works the moment it loads. If
+it doesn't, a red banner appears at the top of the screen and every save
+attempt shows a "Not saved" warning toast instead of a success message — the
+app stays fully usable in that state, it just won't remember anything after
+you reload. This happens when the page is opened somewhere that blocks
+per-site storage rather than because of a bug in the app itself. The usual
+causes, roughly in order of likelihood:
+
+- **An embedded/sandboxed preview** — some editors' built-in "preview" panes
+  (VS Code's Simple Browser or Live Preview extension, some IDE webviews) run
+  pages in a restricted context that blocks `localStorage`. Open the file in
+  a real browser tab instead (Chrome, Edge, Firefox) and it will work.
+- **Private/incognito browsing** — storage still works inside the session but
+  is wiped the moment you close the private window, which looks identical to
+  "nothing saved" the next time you open it.
+- **A different origin each time** — if you serve the app with a local
+  server, `localStorage` is tied to that exact `origin:port`. Restarting a
+  server that picks a random port each run (some "Live Server" style tools
+  do this) means every launch is a fresh, empty origin. Pick one fixed port
+  (e.g. always `python3 -m http.server 8080`) or just open `index.html`
+  directly instead.
+- **Browser setting to clear site data on close** — Chrome's "Clear cookies
+  and other site data when you close all windows" (or the equivalent in your
+  browser) wipes it every time you fully quit the browser, by design.
+
+If the red banner never appears and you're still not seeing data persist,
+that's worth reporting as an actual bug rather than an environment quirk.
+
 ## Project structure
 
 ```

@@ -11,6 +11,13 @@
 
 <div class="app" id="app">
 
+  <!-- ===================== STORAGE WARNING BANNER ===================== -->
+  <div class="storage-banner" id="storageBanner" hidden>
+    <strong>Changes won't be saved.</strong>
+    <span>Your browser is blocking local storage here, so nothing will persist after you reload or close this page. Try opening this file in a normal browser tab (not an embedded preview), turning off private/incognito mode, or serving it with a local server instead of double-clicking it.</span>
+    <button type="button" id="storageBannerClose" aria-label="Dismiss">&times;</button>
+  </div>
+
   <!-- ===================== ONBOARDING ===================== -->
   <div class="onboarding" id="onboarding" hidden>
     <div class="onboarding-card">
