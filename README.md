@@ -90,6 +90,18 @@ causes, roughly in order of likelihood:
 If the red banner never appears and you're still not seeing data persist,
 that's worth reporting as an actual bug rather than an environment quirk.
 
+### Troubleshooting: whole screens look empty or nothing responds
+
+This almost always means `index.html`, `css/styles.css`, `js/data.js`, and
+`js/app.js` have gotten out of sync — for example only some of the four files
+got copied/overwritten during an update, so the HTML is one version and the
+JavaScript is another. The app is written to degrade gracefully if that
+happens (a missing element is checked for before use, and startup is wrapped
+so one error can't quietly blank the whole page), but the safest fix is
+still to replace all four files together as a matched set rather than one at
+a time, then do a hard refresh (Ctrl/Cmd+Shift+R) so the browser isn't
+serving a cached copy of just one of them.
+
 ## Project structure
 
 ```
