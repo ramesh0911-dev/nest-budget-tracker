@@ -212,7 +212,7 @@
       <div class="sheet-head">
         <button type="button" class="btn-text" id="sheetCancel">Cancel</button>
         <h2 id="sheetTitle">Add expense</h2>
-        <button type="submit" class="btn-text btn-save" id="sheetSave">Save</button>
+        <span style="width:52px"></span>
       </div>
 
       <div class="sheet-body">
@@ -262,6 +262,7 @@
           <div class="photo-preview" id="photoPreview" hidden></div>
         </label>
 
+        <button type="submit" class="btn-primary full" id="sheetSave">Save expense</button>
         <button type="button" class="delete-btn" id="fDelete" hidden>Delete expense</button>
       </div>
     </form>
@@ -301,7 +302,7 @@
       <div class="sheet-head">
         <button type="button" class="btn-text" id="categoryCancel">Cancel</button>
         <h2 id="categorySheetTitle">Edit category</h2>
-        <button type="submit" class="btn-text btn-save">Save</button>
+        <span style="width:52px"></span>
       </div>
       <div class="sheet-body">
         <label class="field">
@@ -319,6 +320,7 @@
             <input type="number" id="cBudget" min="0" step="1" required>
           </div>
         </label>
+        <button type="submit" class="btn-primary full">Save category</button>
         <button type="button" class="delete-btn" id="cDelete" hidden>Delete category</button>
       </div>
     </form>
