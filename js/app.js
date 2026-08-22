@@ -524,8 +524,23 @@
     const note = document.getElementById("fNote").value.trim();
     const date = document.getElementById("fDate").value || todayIso();
 
-    if (!amount || amount <= 0) { toast("Enter an amount"); return; }
-    if (!fSelectedCategoryId) { toast("Choose a category"); return; }
+    if (!amount || amount <= 0) {
+      // The form has novalidate (see below for why), so this check — not the
+      // browser's native "required" popup — is what has to catch a blank
+      // Amount. Bring the field into view too: Save now lives at the bottom
+      // of the sheet, so a validation message alone can go unnoticed if the
+      // field that caused it has scrolled off-screen above the fold.
+      toast("Enter an amount");
+      const el = document.getElementById("fAmount");
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+      el.focus();
+      return;
+    }
+    if (!fSelectedCategoryId) {
+      toast("Choose a category");
+      document.getElementById("fCategoryChips").scrollIntoView({ block: "center", behavior: "smooth" });
+      return;
+    }
 
     if (editingExpenseId) {
       const tx = state.transactions.find((t) => t.id === editingExpenseId);
@@ -633,8 +648,23 @@
     e.preventDefault();
     const name = document.getElementById("cName").value.trim();
     const budget = Number(document.getElementById("cBudget").value);
-    if (!name) { toast("Name your category"); return; }
-    if (budget < 0 || Number.isNaN(budget)) { toast("Enter a valid budget"); return; }
+    if (!name) {
+      // Same reasoning as the expense form: novalidate means this explicit
+      // check is what has to catch it, and the field needs to be scrolled
+      // into view since Save sits below it at the bottom of the sheet.
+      toast("Name your category");
+      const el = document.getElementById("cName");
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+      el.focus();
+      return;
+    }
+    if (budget < 0 || Number.isNaN(budget)) {
+      toast("Enter a valid budget");
+      const el = document.getElementById("cBudget");
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+      el.focus();
+      return;
+    }
 
     if (editingCategoryId) {
       const cat = categoryById(editingCategoryId);
