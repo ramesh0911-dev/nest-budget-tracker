@@ -12,48 +12,89 @@
   // Recurring expense engine
   // ---------------------------------------------------------------------
 
+  function addMonthsClamped(date, monthsToAdd) {
+    // Adds calendar months while clamping the day-of-month to the last valid
+    // day of the target month, instead of letting the native Date roll over
+    // into the following month (e.g. Jan 31 + 1 month must land on Feb 28,
+    // not spill into Mar 3 the way `setMonth` does by default).
+    const targetIndex = date.getMonth() + monthsToAdd;
+    const targetYear = date.getFullYear() + Math.floor(targetIndex / 12);
+    const targetMonth = ((targetIndex % 12) + 12) % 12;
+    const daysInTargetMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+    const day = Math.min(date.getDate(), daysInTargetMonth);
+    return new Date(targetYear, targetMonth, day);
+  }
+
   function addInterval(date, freq) {
     const d = new Date(date.getTime());
     switch (freq) {
-      case "daily": d.setDate(d.getDate() + 1); break;
-      case "weekly": d.setDate(d.getDate() + 7); break;
-      case "monthly": d.setMonth(d.getMonth() + 1); break;
-      case "quarterly": d.setMonth(d.getMonth() + 3); break;
-      default: d.setMonth(d.getMonth() + 1);
+      case "daily": d.setDate(d.getDate() + 1); return d;
+      case "weekly": d.setDate(d.getDate() + 7); return d;
+      case "monthly": return addMonthsClamped(date, 1);
+      case "quarterly": return addMonthsClamped(date, 3);
+      default: return addMonthsClamped(date, 1);
     }
-    return d;
   }
 
   function generateDueRecurringTransactions() {
     const today = new Date(todayIso());
     let changed = false;
 
-    state.recurringRules.forEach((rule) => {
-      let cursor = new Date(rule.lastGeneratedDate || rule.startDate);
-      let guard = 0;
-      let next = addInterval(cursor, rule.freq);
+    function pushOccurrence(rule, nextIso) {
+      const alreadyExists = state.transactions.some(
+        (t) => t.recurringId === rule.id && t.date === nextIso
+      );
+      if (!alreadyExists) {
+        state.transactions.push({
+          id: uid("t"),
+          categoryId: rule.categoryId,
+          amount: rule.amount,
+          note: rule.note,
+          date: nextIso,
+          payerId: rule.payerId,
+          recurringId: rule.id,
+        });
+        changed = true;
+      }
+    }
 
-      while (next <= today && guard < 500) {
-        const nextIso = isoDate(next);
-        const alreadyExists = state.transactions.some(
-          (t) => t.recurringId === rule.id && t.date === nextIso
-        );
-        if (!alreadyExists) {
-          state.transactions.push({
-            id: uid("t"),
-            categoryId: rule.categoryId,
-            amount: rule.amount,
-            note: rule.note,
-            date: nextIso,
-            payerId: rule.payerId,
-            recurringId: rule.id,
-          });
-          changed = true;
+    state.recurringRules.forEach((rule) => {
+      const monthsPerPeriod = rule.freq === "quarterly" ? 3 : rule.freq === "monthly" ? 1 : null;
+      let guard = 0;
+
+      if (monthsPerPeriod) {
+        // Anchor every occurrence to the rule's original start date instead of
+        // compounding off the previously generated date, so a bill started on
+        // the 29th/30th/31st doesn't permanently drift to an earlier day the
+        // first time it passes through a shorter month — e.g. this keeps
+        // Jan 31 -> Feb 28 -> Mar 31, instead of Jan 31 -> Feb 28 -> Mar 28.
+        const anchor = new Date(rule.startDate);
+        let n = typeof rule.occurrenceCount === "number" ? rule.occurrenceCount : 0;
+        let next = addMonthsClamped(anchor, monthsPerPeriod * (n + 1));
+
+        while (next <= today && guard < 500) {
+          const nextIso = isoDate(next);
+          pushOccurrence(rule, nextIso);
+          n++;
+          rule.occurrenceCount = n;
+          rule.lastGeneratedDate = nextIso;
+          next = addMonthsClamped(anchor, monthsPerPeriod * (n + 1));
+          guard++;
         }
-        rule.lastGeneratedDate = nextIso;
-        cursor = next;
-        next = addInterval(cursor, rule.freq);
-        guard++;
+      } else {
+        // Daily/weekly intervals are fixed-length, so compounding from the
+        // last generated date never drifts — no anchor needed here.
+        let cursor = new Date(rule.lastGeneratedDate || rule.startDate);
+        let next = addInterval(cursor, rule.freq);
+
+        while (next <= today && guard < 500) {
+          const nextIso = isoDate(next);
+          pushOccurrence(rule, nextIso);
+          rule.lastGeneratedDate = nextIso;
+          cursor = next;
+          next = addInterval(cursor, rule.freq);
+          guard++;
+        }
       }
     });
 
@@ -355,7 +396,10 @@
 
     const suggEl = document.getElementById("settleSuggestions");
     suggEl.innerHTML = "";
-    document.getElementById("settleEmpty").hidden = suggestions.length !== 0 || n === 0;
+    // Show the "all settled up" empty state whenever there's nothing else to
+    // display — either no suggestions, or no household members at all (an
+    // empty member list used to fall through to a blank screen instead).
+    document.getElementById("settleEmpty").hidden = suggestions.length !== 0 && n !== 0;
 
     suggestions.forEach((s) => {
       const row = document.createElement("div");
@@ -609,10 +653,20 @@
   document.getElementById("cDelete").addEventListener("click", () => {
     if (!editingCategoryId) return;
     const hasTx = state.transactions.some((t) => t.categoryId === editingCategoryId);
-    if (hasTx && !confirm("This category has expenses logged against it. Delete it anyway? The expenses will stay but show as uncategorized.")) {
-      return;
+    const hasRecurring = state.recurringRules.some((r) => r.categoryId === editingCategoryId);
+
+    if (hasTx) {
+      const msg = "This category has expenses logged against it. Delete it anyway? The expenses will stay but show as uncategorized."
+        + (hasRecurring ? " Its recurring expense will also be stopped." : "");
+      if (!confirm(msg)) return;
+    } else if (hasRecurring) {
+      if (!confirm("This category has a recurring expense set up. Delete it anyway? The recurring expense will be stopped.")) return;
     }
+
     state.categories = state.categories.filter((c) => c.id !== editingCategoryId);
+    // Without this, a deleted category's recurring rule keeps generating new
+    // "Uncategorized" expenses forever on every future app boot.
+    state.recurringRules = state.recurringRules.filter((r) => r.categoryId !== editingCategoryId);
     Store.save();
     closeCategorySheet();
     renderHome();
@@ -625,15 +679,24 @@
   // HOUSEHOLD SHEET
   // ---------------------------------------------------------------------
 
+  // Household member edits are staged in this working copy and only
+  // committed to the real state when "Save household" is pressed. Previously
+  // add/remove mutated state.members directly, so clicking Close/Cancel (or
+  // tapping the backdrop) looked like it discarded the change but actually
+  // left it applied in memory — it would then get silently persisted the
+  // next time anything else in the app called Store.save(). Editing a copy
+  // and only swapping it in on Save makes Cancel/Close a real cancel.
+  let hhWorkingMembers = [];
+
   function renderHhMembers() {
     const wrap = document.getElementById("hhMembers");
     wrap.innerHTML = "";
-    state.members.forEach((m) => {
+    hhWorkingMembers.forEach((m) => {
       const chip = document.createElement("span");
       chip.className = "onb-member-chip";
       chip.innerHTML = `${escapeHtml(m.name)} <button type="button" aria-label="Remove ${escapeHtml(m.name)}">&times;</button>`;
       chip.querySelector("button").addEventListener("click", () => {
-        state.members = state.members.filter((x) => x.id !== m.id);
+        hhWorkingMembers = hhWorkingMembers.filter((x) => x.id !== m.id);
         renderHhMembers();
       });
       wrap.appendChild(chip);
@@ -642,6 +705,7 @@
 
   document.getElementById("moreHousehold").addEventListener("click", () => {
     document.getElementById("hhName").value = state.household.name;
+    hhWorkingMembers = state.members.map((m) => ({ ...m }));
     renderHhMembers();
     document.getElementById("householdBackdrop").hidden = false;
   });
@@ -657,7 +721,7 @@
     const input = document.getElementById("hhMemberInput");
     const name = input.value.trim();
     if (!name) return;
-    state.members.push({ id: uid("m"), name });
+    hhWorkingMembers.push({ id: uid("m"), name });
     input.value = "";
     renderHhMembers();
   });
@@ -665,6 +729,7 @@
   document.getElementById("hhSave").addEventListener("click", () => {
     const name = document.getElementById("hhName").value.trim();
     state.household.name = name || state.household.name;
+    state.members = hhWorkingMembers;
     Store.save();
     document.getElementById("householdBackdrop").hidden = true;
     renderHome();
@@ -721,6 +786,18 @@
   // MORE: export / reset / replay onboarding
   // ---------------------------------------------------------------------
 
+  function csvField(value) {
+    // Proper CSV escaping (RFC 4180 style) for every column, not just the
+    // note field — category names and member names are also free text the
+    // user can type commas, quotes, or newlines into, and an unescaped
+    // comma there used to silently shift every later column in the row.
+    const str = String(value === null || value === undefined ? "" : value);
+    if (/[",\n\r]/.test(str)) {
+      return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+  }
+
   document.getElementById("moreExport").addEventListener("click", () => {
     const rows = [["Date", "Category", "Amount", "Paid by", "Note", "Recurring"]];
     state.transactions
@@ -733,11 +810,11 @@
           cat ? cat.name : "Uncategorized",
           t.amount,
           memberName(t.payerId),
-          (t.note || "").replace(/,/g, ";"),
+          t.note || "",
           t.recurringId ? "yes" : "no",
         ]);
       });
-    const csv = rows.map((r) => r.join(",")).join("\n");
+    const csv = rows.map((r) => r.map(csvField).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

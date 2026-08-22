@@ -126,8 +126,11 @@ const Store = {
           return this._state;
         }
       } catch (e) {
-        console.warn("Failed to read saved data, starting fresh.", e);
-        this.storageAvailable = false;
+        // Storage itself works (the probe above already passed) — this is
+        // corrupted saved JSON, not a blocked-storage situation, so don't
+        // trip the "storage is blocked" banner for it. Reseed and carry on;
+        // saving will work normally from here.
+        console.warn("Saved data was corrupted, starting fresh.", e);
       }
     }
 
