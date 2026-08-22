@@ -8,6 +8,24 @@
 
   const state = Store.load();
 
+  // Belt-and-suspenders: if any click handler throws for a reason we haven't
+  // seen in testing (a bad merge on a real device, an unexpected data shape,
+  // a browser quirk), the failure must never be silent. Without this, an
+  // uncaught error partway through a click handler just stops execution —
+  // from the outside that looks exactly like "I clicked Save and nothing
+  // happened", with no clue left behind for anyone to diagnose it from.
+  window.addEventListener("error", (e) => {
+    console.error("[Nest] Uncaught error:", e.error || e.message, "at", e.filename + ":" + e.lineno);
+    try {
+      toast("Something went wrong (see console) — " + (e.message || "unknown error"));
+    } catch (_) {
+      /* toast() itself may be unavailable this early; console.error above still ran */
+    }
+  });
+  window.addEventListener("unhandledrejection", (e) => {
+    console.error("[Nest] Unhandled promise rejection:", e.reason);
+  });
+
   // ---------------------------------------------------------------------
   // Recurring expense engine
   // ---------------------------------------------------------------------
@@ -954,6 +972,15 @@
    * shows a warning instead so a failed save is never silent.
    */
   function notifySave(successMsg) {
+    // Logged unconditionally so a "Save did nothing" report can be settled by
+    // opening DevTools (F12) → Console and looking for this line: it proves
+    // whether the save actually reached localStorage and how many
+    // transactions exist right after, independent of what the UI shows.
+    console.log(
+      "[Nest] save attempted — lastSaveOk=" + Store.lastSaveOk +
+      ", storageAvailable=" + Store.storageAvailable +
+      ", transactions=" + state.transactions.length
+    );
     if (Store.lastSaveOk) {
       toast(successMsg);
     } else {
