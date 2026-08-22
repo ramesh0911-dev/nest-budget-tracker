@@ -636,6 +636,31 @@ body{
 }
 .recurring-empty{ color:var(--muted); text-align:center; padding:30px 10px; font-size:13.5px; }
 
+/* ---------- storage warning banner ---------- */
+.storage-banner{
+  position:sticky;
+  top:0;
+  z-index:60;
+  background:#7C2820;
+  color:#fff;
+  padding:10px 34px 10px 14px;
+  font-size:12.5px;
+  line-height:1.45;
+}
+.storage-banner strong{ display:block; font-size:13px; margin-bottom:2px; }
+.storage-banner span{ opacity:0.92; }
+.storage-banner button{
+  position:absolute;
+  top:6px; right:8px;
+  background:none;
+  border:none;
+  color:#fff;
+  font-size:18px;
+  line-height:1;
+  cursor:pointer;
+  padding:4px 6px;
+}
+
 /* ---------- toast ---------- */
 .toast{
   position:fixed;
