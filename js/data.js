@@ -93,30 +93,60 @@ function seedState() {
   };
 }
 
+function probeLocalStorage() {
+  const probeKey = "__nest_probe__";
+  try {
+    if (typeof localStorage === "undefined" || localStorage === null) return false;
+    localStorage.setItem(probeKey, "1");
+    const ok = localStorage.getItem(probeKey) === "1";
+    localStorage.removeItem(probeKey);
+    return ok;
+  } catch (e) {
+    return false;
+  }
+}
+
 const Store = {
   _state: null,
+  // Set once at load() time. false means localStorage is unavailable, blocked, or
+  // silently a no-op (private-browsing modes and sandboxed previews commonly do this) —
+  // the app still runs, but nothing survives a reload. app.js surfaces this to the user.
+  storageAvailable: true,
+  lastSaveOk: true,
 
   load() {
     if (this._state) return this._state;
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        this._state = JSON.parse(raw);
-        return this._state;
+    this.storageAvailable = probeLocalStorage();
+
+    if (this.storageAvailable) {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          this._state = JSON.parse(raw);
+          return this._state;
+        }
+      } catch (e) {
+        console.warn("Failed to read saved data, starting fresh.", e);
+        this.storageAvailable = false;
       }
-    } catch (e) {
-      console.warn("Failed to read saved data, starting fresh.", e);
     }
+
     this._state = seedState();
     this.save();
     return this._state;
   },
 
+  /** Returns true if the save actually reached persistent storage. */
   save() {
+    if (!this.storageAvailable) { this.lastSaveOk = false; return false; }
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this._state));
+      this.lastSaveOk = true;
+      return true;
     } catch (e) {
-      console.warn("Failed to persist data (storage may be full/unavailable).", e);
+      console.warn("Failed to persist data (storage may be full, blocked, or unavailable).", e);
+      this.lastSaveOk = false;
+      return false;
     }
   },
 

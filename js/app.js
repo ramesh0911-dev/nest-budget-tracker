@@ -368,7 +368,7 @@
         state.settlements.push({ id: uid("s"), from: s.from, to: s.to, amount: s.amount, monthKey: mk, date: todayIso() });
         Store.save();
         renderSettle();
-        toast("Marked as settled");
+        notifySave("Marked as settled");
       });
       suggEl.appendChild(row);
     });
@@ -527,7 +527,7 @@
     renderActivity();
     renderBudgets();
     renderSettle();
-    toast("Expense saved");
+    notifySave("Expense saved");
   });
 
   document.getElementById("fDelete").addEventListener("click", () => {
@@ -539,7 +539,7 @@
     renderActivity();
     renderBudgets();
     renderSettle();
-    toast("Expense deleted");
+    notifySave("Expense deleted");
   });
 
   // ---------------------------------------------------------------------
@@ -603,7 +603,7 @@
     closeCategorySheet();
     renderHome();
     renderBudgets();
-    toast("Category saved");
+    notifySave("Category saved");
   });
 
   document.getElementById("cDelete").addEventListener("click", () => {
@@ -618,7 +618,7 @@
     renderHome();
     renderBudgets();
     renderActivity();
-    toast("Category deleted");
+    notifySave("Category deleted");
   });
 
   // ---------------------------------------------------------------------
@@ -669,7 +669,7 @@
     document.getElementById("householdBackdrop").hidden = true;
     renderHome();
     renderSettle();
-    toast("Household updated");
+    notifySave("Household updated");
   });
 
   // ---------------------------------------------------------------------
@@ -700,7 +700,7 @@
         state.recurringRules = state.recurringRules.filter((r) => r.id !== rule.id);
         Store.save();
         renderRecurringList();
-        toast("Recurring expense stopped");
+        notifySave("Recurring expense stopped");
       });
       list.appendChild(row);
     });
@@ -840,11 +840,37 @@
     toastTimer = setTimeout(() => { el.hidden = true; }, 2200);
   }
 
+  /**
+   * Call this right after Store.save() instead of a plain toast(). If the save
+   * actually reached localStorage, shows the normal success message; if not
+   * (storage blocked, private-browsing mode, sandboxed preview, quota full),
+   * shows a warning instead so a failed save is never silent.
+   */
+  function notifySave(successMsg) {
+    if (Store.lastSaveOk) {
+      toast(successMsg);
+    } else {
+      toast("Not saved — storage is blocked in this browser/preview");
+    }
+  }
+
   // ---------------------------------------------------------------------
   // Boot
   // ---------------------------------------------------------------------
 
+  function checkStorageBanner() {
+    const banner = document.getElementById("storageBanner");
+    if (!Store.storageAvailable) {
+      banner.hidden = false;
+    }
+  }
+
+  document.getElementById("storageBannerClose").addEventListener("click", () => {
+    document.getElementById("storageBanner").hidden = true;
+  });
+
   function boot() {
+    checkStorageBanner();
     generateDueRecurringTransactions();
     renderHome();
     renderActivity();
