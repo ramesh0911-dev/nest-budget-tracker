@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Nest — Storage Diagnostics</title>
+<style>
+  body{font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:640px;margin:24px auto;padding:0 16px;color:#241E17;line-height:1.5;}
+  h1{font-size:20px;}
+  .card{border:1.5px solid #E4DCCF;border-radius:12px;padding:16px;margin:14px 0;background:#FBF8F2;}
+  .ok{color:#2E7D46;font-weight:700;}
+  .bad{color:#B23A2E;font-weight:700;}
+  .warn{color:#C98A12;font-weight:700;}
+  code{background:#EFE9DC;padding:2px 5px;border-radius:4px;font-size:13px;}
+  table{width:100%;border-collapse:collapse;margin-top:6px;}
+  td{padding:4px 6px;border-bottom:1px solid #EFE9DC;font-size:14px;vertical-align:top;}
+  td:first-child{color:#6B6355;width:230px;}
+  .big{font-size:28px;font-weight:800;margin:4px 0;}
+</style>
+</head>
+<body>
+<h1>Nest — Storage Diagnostics</h1>
+<p>This page checks whether your browser is actually able to remember data between visits — the same mechanism the budget tracker relies on. It doesn't touch your budget data.</p>
+
+<div class="card">
+  <div id="probeResult">Checking…</div>
+</div>
+
+<div class="card">
+  <strong>Visit counter</strong> (stored under its own key, separate from the budget tracker)
+  <div class="big" id="counterBig">…</div>
+  <div id="counterExplain"></div>
+</div>
+
+<div class="card">
+  <strong>Your budget tracker's actual saved data right now</strong>
+  <div id="appDataResult">Checking…</div>
+</div>
+
+<div class="card">
+  <strong>Environment</strong>
+  <table id="envTable"></table>
+</div>
+
+<p style="font-size:13px;color:#6B6355;">
+  How to use this: note the visit counter number, then fully close this browser
+  window (or the whole browser app) and reopen this same file. If the counter
+  goes back down instead of going up by one, this browser is not keeping any
+  site data between sessions — that's the same reason the budget tracker
+  wouldn't keep expenses either, and it's a browser/OS setting, not a bug in
+  the tracker itself.
+</p>
+
+<script>
+(function(){
+  const probeKey = "__nest_diag_probe__";
+  const probeEl = document.getElementById("probeResult");
+  let storageWorks = false;
+  try {
+    localStorage.setItem(probeKey, "1");
+    storageWorks = localStorage.getItem(probeKey) === "1";
+    localStorage.removeItem(probeKey);
+  } catch (e) {
+    storageWorks = false;
+    probeEl.innerHTML = '<span class="bad">localStorage threw an error:</span> ' + (e && e.message ? e.message : e);
+  }
+  if (storageWorks) {
+    probeEl.innerHTML = '<span class="ok">localStorage works in this browser right now.</span> Writing and reading back a test value succeeded.';
+  } else if (!probeEl.innerHTML.includes("threw")) {
+    probeEl.innerHTML = '<span class="bad">localStorage is NOT available in this browser/tab.</span> This means nothing — not this diagnostic, not the budget tracker — can be remembered here at all.';
+  }
+
+  const counterKey = "__nest_diag_visit_counter__";
+  const firstSeenKey = "__nest_diag_first_seen__";
+  let count = 0, firstSeen = null;
+  try {
+    count = parseInt(localStorage.getItem(counterKey) || "0", 10) + 1;
+    localStorage.setItem(counterKey, String(count));
+    firstSeen = localStorage.getItem(firstSeenKey);
+    if (!firstSeen) {
+      firstSeen = new Date().toString();
+      localStorage.setItem(firstSeenKey, firstSeen);
+    }
+  } catch (e) { /* already reported above */ }
+
+  document.getElementById("counterBig").textContent = storageWorks ? count : "N/A";
+  const explainEl = document.getElementById("counterExplain");
+  if (storageWorks) {
+    if (count === 1) {
+      explainEl.innerHTML = "This is the first time this browser has ever loaded this page (or its storage was just cleared). <b>Reload this page now</b> without closing the browser — the number should become 2. Then fully close and reopen the browser and load it again to see if it keeps counting up or resets to 1.";
+    } else {
+      explainEl.innerHTML = "Loaded " + count + " times so far. First seen: " + firstSeen + ".";
+    }
+  }
+
+  const appDataEl = document.getElementById("appDataResult");
+  try {
+    const raw = localStorage.getItem("nest.budget.v1");
+    if (!raw) {
+      appDataEl.innerHTML = '<span class="warn">No saved budget tracker data found under this browser/origin.</span> Either you haven\'t opened the tracker from this exact file location in this browser yet, or this browser doesn\'t keep its data (see visit counter above).';
+    } else {
+      const data = JSON.parse(raw);
+      const txCount = (data.transactions || []).length;
+      const members = (data.members || []).map(m => m.name).join(", ");
+      appDataEl.innerHTML =
+        '<span class="ok">Found saved data.</span><table>' +
+        '<tr><td>Household</td><td>' + (data.household ? data.household.name : "?") + '</td></tr>' +
+        '<tr><td>Members</td><td>' + members + '</td></tr>' +
+        '<tr><td>Transactions saved</td><td>' + txCount + '</td></tr>' +
+        '</table>' +
+        '<p style="font-size:13px;">Note: this only shows data if this diagnostics page and <code>index.html</code> are opened the same way (both as local files, or both from the same http server/port) — otherwise they are different browser storage areas by design.</p>';
+    }
+  } catch (e) {
+    appDataEl.innerHTML = '<span class="bad">Could not read budget tracker data:</span> ' + (e && e.message ? e.message : e);
+  }
+
+  const env = {
+    "Page URL / protocol": location.href,
+    "Is file:// (opened by double-click)": location.protocol === "file:" ? "Yes" : "No (protocol: " + location.protocol + ")",
+    "Browser (user agent)": navigator.userAgent,
+    "Cookies enabled": navigator.cookieEnabled,
+    "Storage quota estimate": "checking…",
+  };
+  const table = document.getElementById("envTable");
+  Object.entries(env).forEach(([k, v]) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = "<td>" + k + "</td><td>" + v + "</td>";
+    table.appendChild(tr);
+  });
+  if (navigator.storage && navigator.storage.estimate) {
+    navigator.storage.estimate().then((est) => {
+      const row = table.lastElementChild.querySelector("td:last-child");
+      if (row) row.textContent = (est.usage || 0) + " bytes used of " + (est.quota || 0) + " bytes quota";
+    }).catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>

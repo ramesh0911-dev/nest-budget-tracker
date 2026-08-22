@@ -116,6 +116,33 @@ causes, roughly in order of likelihood:
 If the red banner never appears and you're still not seeing data persist,
 that's worth reporting as an actual bug rather than an environment quirk.
 
+### Found it: "I add an expense and it disappears" was a month-filter mismatch
+
+Home and Activity only ever show one month at a time — whatever month is
+shown at the top (e.g. "August 2026"), with `‹ ›` arrows to browse other
+months. A new expense always saves under **today's actual date**, so if the
+app was left parked on a different month (from browsing with those arrows,
+testing recurring expenses, or just poking around), a brand-new expense
+would save correctly but never show up in the totals or list you were
+looking at — with no obvious reason why, since the rest of the screen still
+looked normal. Two fixes:
+
+- Saving an expense now automatically jumps the view to whatever month that
+  expense's date falls in, so it's always visible immediately after saving.
+- Whenever Home isn't showing the actual current month, a
+  "Not viewing the current month — jump to today" link appears right under
+  the month name, so that state is never silent or easy to miss.
+
+If you're still not seeing something you just saved, open DevTools
+(F12 in Chrome/Edge) → **Console** tab right after clicking Save — every
+save now logs a line like `[Nest] save attempted — lastSaveOk=true,
+storageAvailable=true, transactions=8`, confirming whether it actually
+reached storage. Any unexpected error anywhere in the app now also shows as
+a toast message and a red console entry instead of failing silently. There's
+also a standalone `diagnostics.html` in this folder — open it the same way
+you open the app (double-click, or through the same local server) to check
+whether your browser is keeping data between visits at all.
+
 ### Fixed in this update
 
 A full test pass (Playwright, automated) found and fixed several real bugs,

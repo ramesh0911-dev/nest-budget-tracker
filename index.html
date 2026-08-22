@@ -77,6 +77,15 @@
       </button>
     </div>
 
+    <!-- Shown only when Home/Activity are parked on a month other than the
+         real current one. New expenses always save under today's actual
+         date, so if this is visible, that's why a just-added expense (or
+         any recent spending) won't show up in the totals below -- not a
+         failed save. -->
+    <button type="button" id="jumpToCurrentMonth" class="btn-text" hidden style="color:var(--accent);padding:0 0 6px;">
+      Not viewing the current month — jump to today →
+    </button>
+
     <div class="total-block">
       <div class="total-label" id="totalLabel">TOTAL SPENT IN AUGUST</div>
       <div class="total-amount" id="totalAmount">₹0</div>
