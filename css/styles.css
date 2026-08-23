@@ -1,33 +1,39 @@
-/* Palette + type drawn from kama-capital.com: deep purple surfaces, a
-   lavender primary accent, lime-green for positive figures, and the
-   Barlow / Barlow Condensed type family (condensed for large headings,
-   regular for everything else) in place of the previous warm/light theme. */
+/* Palette + type drawn from the RAAH "How we differ" page
+   (symphonious-raah.netlify.app/different): a near-black base with
+   glassy raised card surfaces, a volt-cyan/nova-purple/flare-pink
+   gradient reserved for the one primary call-to-action (matching how
+   the source site uses it only on its "Plan a trip" button), zest
+   lime-green for positive figures, and Bricolage Grotesque for
+   headings with Inter Tight for everything else -- the exact pairing
+   the source site uses. */
 :root{
-  --bg:#1B1229;
-  --card:#2C2148;
-  --ink:#F5F2FB;
-  --muted:#B6ACC9;
-  --muted-2:#7C7096;
-  --border:#3D2E57;
-  --accent:#917DEC;
-  --accent-ink:#EDE7FF;
-  --accent-tint:#392C55;
-  --accent-glow:rgba(145,125,236,0.35);
-  --green:#9FE870;
-  --green-tint:#233A20;
-  --amber:#F0B84D;
-  --amber-tint:#4A3B1D;
-  --red:#FF6B7A;
-  --red-tint:#472233;
-  --violet:#7DD3E8;
-  --violet-tint:#1E3A44;
-  --toast-bg:#120A1D;
+  --bg:#07090F;
+  --card:#161B27;
+  --ink:#F2F5FB;
+  --muted:#9AA6BE;
+  --muted-2:#6B7590;
+  --border:#232A3D;
+  --accent:#A855F7;
+  --accent-ink:#EDE4FF;
+  --accent-tint:#241A3D;
+  --accent-glow:rgba(168,85,247,0.35);
+  --gradient-brand:linear-gradient(115deg, #22D3EE 0%, #A855F7 55%, #FF3D8B 100%);
+  --on-accent:#05070C;
+  --green:#C8F751;
+  --green-tint:#232B14;
+  --amber:#FFB224;
+  --amber-tint:#3A2C12;
+  --red:#FF4D5E;
+  --red-tint:#3A1820;
+  --violet:#22D3EE;
+  --violet-tint:#12313A;
+  --toast-bg:#0E1119;
   --radius-lg:20px;
   --radius-md:14px;
   --radius-sm:10px;
-  --shadow:0 8px 24px rgba(0,0,0,0.35);
-  --font: "Barlow", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-heading: "Barlow Condensed", "Barlow", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --shadow:inset 0 1px 0 rgba(255,255,255,0.08), 0 10px 30px -20px rgba(0,0,0,0.9);
+  --font: "Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-heading: "Bricolage Grotesque", "Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 *{box-sizing:border-box;}
@@ -35,7 +41,7 @@ html,body{margin:0;padding:0;}
 [hidden]{ display:none !important; }
 body{
   font-family:var(--font);
-  background:#0D0815;
+  background:#030407;
   color:var(--ink);
   -webkit-font-smoothing:antialiased;
 }
@@ -229,10 +235,10 @@ body{
   bottom:92px;
   width:56px;height:56px;
   border-radius:999px;
-  background:var(--accent);
-  color:#fff;
+  background:var(--gradient-brand);
+  color:var(--on-accent);
   border:none;
-  box-shadow:0 10px 20px rgba(145,125,236,0.4);
+  box-shadow:0 10px 24px -6px rgba(168,85,247,0.55);
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;
   z-index:20;
@@ -408,7 +414,7 @@ body{
 .sheet-backdrop{
   position:fixed;
   inset:0;
-  background:rgba(6,4,12,0.6);
+  background:rgba(2,3,6,0.7);
   display:flex;
   align-items:flex-end;
   justify-content:center;
@@ -541,8 +547,8 @@ body{
 
 .btn-primary{
   border:none;
-  background:var(--accent);
-  color:#fff;
+  background:var(--gradient-brand);
+  color:var(--on-accent);
   font-weight:700;
   font-size:14.5px;
   padding:13px 18px;
@@ -653,7 +659,7 @@ body{
   position:sticky;
   top:0;
   z-index:60;
-  background:#7A2540;
+  background:#4A1620;
   color:#fff;
   padding:10px 34px 10px 14px;
   font-size:12.5px;
