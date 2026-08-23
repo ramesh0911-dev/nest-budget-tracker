@@ -1,26 +1,33 @@
+/* Palette + type drawn from kama-capital.com: deep purple surfaces, a
+   lavender primary accent, lime-green for positive figures, and the
+   Barlow / Barlow Condensed type family (condensed for large headings,
+   regular for everything else) in place of the previous warm/light theme. */
 :root{
-  --bg:#F6EFE3;
-  --card:#FFFFFF;
-  --ink:#241E17;
-  --muted:#8A7E6E;
-  --muted-2:#B7AC9B;
-  --border:#EAE0CD;
-  --accent:#B23A2E;
-  --accent-ink:#7C2820;
-  --accent-tint:#F3DAD3;
-  --green:#3F7D55;
-  --green-tint:#DCEBE0;
-  --amber:#C9891F;
-  --amber-tint:#F6E6C3;
-  --red:#C0392B;
-  --red-tint:#F6D9D3;
-  --violet:#6C5CA6;
-  --violet-tint:#E6DFF3;
+  --bg:#1B1229;
+  --card:#2C2148;
+  --ink:#F5F2FB;
+  --muted:#B6ACC9;
+  --muted-2:#7C7096;
+  --border:#3D2E57;
+  --accent:#917DEC;
+  --accent-ink:#EDE7FF;
+  --accent-tint:#392C55;
+  --accent-glow:rgba(145,125,236,0.35);
+  --green:#9FE870;
+  --green-tint:#233A20;
+  --amber:#F0B84D;
+  --amber-tint:#4A3B1D;
+  --red:#FF6B7A;
+  --red-tint:#472233;
+  --violet:#7DD3E8;
+  --violet-tint:#1E3A44;
+  --toast-bg:#120A1D;
   --radius-lg:20px;
   --radius-md:14px;
   --radius-sm:10px;
-  --shadow:0 8px 24px rgba(36,30,23,0.08);
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --shadow:0 8px 24px rgba(0,0,0,0.35);
+  --font: "Barlow", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-heading: "Barlow Condensed", "Barlow", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 *{box-sizing:border-box;}
@@ -28,7 +35,7 @@ html,body{margin:0;padding:0;}
 [hidden]{ display:none !important; }
 body{
   font-family:var(--font);
-  background:#DED2BC;
+  background:#0D0815;
   color:var(--ink);
   -webkit-font-smoothing:antialiased;
 }
@@ -52,18 +59,20 @@ body{
   padding:22px 20px 0;
 }
 .brand{
+  font-family:var(--font-heading);
   color:var(--accent);
-  font-weight:700;
-  font-size:14px;
-  letter-spacing:0.04em;
+  font-weight:800;
+  font-size:15px;
+  letter-spacing:0.05em;
   text-transform:uppercase;
   margin-bottom:2px;
 }
 .household-name{
-  font-size:21px;
+  font-family:var(--font-heading);
+  font-size:23px;
   margin:0;
-  font-weight:700;
-  line-height:1.25;
+  font-weight:800;
+  line-height:1.2;
   max-width:240px;
 }
 .month-picker{
@@ -105,8 +114,10 @@ body{
   padding:22px 20px 6px;
 }
 .simple-header h1{
+  font-family:var(--font-heading);
   margin:0;
-  font-size:22px;
+  font-size:25px;
+  font-weight:800;
 }
 .header-sub{
   color:var(--muted);
@@ -125,9 +136,10 @@ body{
   text-transform:uppercase;
 }
 .total-amount{
-  font-size:40px;
+  font-family:var(--font-heading);
+  font-size:44px;
   font-weight:800;
-  letter-spacing:-0.02em;
+  letter-spacing:-0.01em;
   margin:2px 0 6px;
 }
 .total-remaining{
@@ -208,7 +220,7 @@ body{
   color:var(--muted);
 }
 .empty-icon{ font-size:40px; margin-bottom:10px; }
-.empty-state h2{ margin:0 0 6px; color:var(--ink); font-size:17px; }
+.empty-state h2{ font-family:var(--font-heading); margin:0 0 6px; color:var(--ink); font-size:19px; font-weight:800; }
 .empty-state p{ margin:0; font-size:13.5px; line-height:1.5; }
 
 .fab{
@@ -220,7 +232,7 @@ body{
   background:var(--accent);
   color:#fff;
   border:none;
-  box-shadow:0 10px 20px rgba(178,58,46,0.35);
+  box-shadow:0 10px 20px rgba(145,125,236,0.4);
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;
   z-index:20;
@@ -396,7 +408,7 @@ body{
 .sheet-backdrop{
   position:fixed;
   inset:0;
-  background:rgba(36,30,23,0.45);
+  background:rgba(6,4,12,0.6);
   display:flex;
   align-items:flex-end;
   justify-content:center;
@@ -425,7 +437,7 @@ body{
   justify-content:space-between;
   padding:10px 16px 14px;
 }
-.sheet-head h2{ margin:0; font-size:16.5px; }
+.sheet-head h2{ font-family:var(--font-heading); margin:0; font-size:19px; font-weight:800; }
 .btn-text{
   background:none;
   border:none;
@@ -451,7 +463,7 @@ body{
   color:var(--ink);
   font-family:inherit;
 }
-.field input:focus{ outline:2px solid var(--accent-tint); border-color:var(--accent); }
+.field input:focus{ outline:3px solid var(--accent-glow); border-color:var(--accent); }
 
 .amount-input{
   display:flex;
@@ -592,7 +604,7 @@ body{
 }
 .onboarding-step{ text-align:center; display:flex; flex-direction:column; align-items:center; gap:10px; }
 .onb-icon{ font-size:44px; margin-bottom:4px; }
-.onboarding-step h1{ margin:0; font-size:22px; }
+.onboarding-step h1{ font-family:var(--font-heading); margin:0; font-size:26px; font-weight:800; }
 .onboarding-step p{ margin:0; color:var(--muted); font-size:14.5px; line-height:1.5; max-width:320px; }
 .onboarding-step input[type="text"]{
   width:100%;
@@ -641,7 +653,7 @@ body{
   position:sticky;
   top:0;
   z-index:60;
-  background:#7C2820;
+  background:#7A2540;
   color:#fff;
   padding:10px 34px 10px 14px;
   font-size:12.5px;
@@ -667,8 +679,9 @@ body{
   left:50%;
   bottom:100px;
   transform:translateX(-50%);
-  background:var(--ink);
+  background:var(--toast-bg);
   color:#fff;
+  border:1px solid var(--border);
   padding:11px 18px;
   border-radius:999px;
   font-size:13.5px;
